@@ -16,7 +16,7 @@
  * （2）message-for：校验信息隶属于哪个被校验控件，基值为被校验控件的test-id；
  * （3）test-type：校验信息的类型，与message-for同时使用；
  * （4）test-point：待校验控件组中的校验点，即组中的单个控件；
- * （5）required, groupRequired, number, max, min, minlength, email, idcard, mobile，以及自定义校验器的名字，用于标识待校验控件的校验类型；
+ * （5）required, groupRequired, number, max, min, minlength, email, idcard, mobile，eaualTo以及自定义校验器的名字，用于标识待校验控件的校验类型；
  * 3. 使用方法
  * （1）html代码
  * 		<div id="inputs_elements">
@@ -51,10 +51,11 @@
  * 		b. 自定义校验器
  * 			注意：校验器名必须为合法js标识符（不能包括中划线）
  * 			validate1.extend({
- * 				validator_name : function(value, param, $element){ 
+ * 				validator_name : function(value, param, $element, $obj){
  * 					//value: 待校验对象的输入值;
  * 					//param: 校验类型的取值（如 max="20" 中的值 20）;
- * 					//$element 待校验对象的Jquery对象.
+ * 					//$element 待校验对象的Jquery对象;
+ * 					//$obj 当前的SimValidate对象.
  * 					...
  * 					return true; // or false
  * 				}
@@ -70,6 +71,7 @@
 	 */
 	$.fn.SimValidate=function(options){
 		var simVali=new SimValidate(this,options);
+		simObject=simVali;
 		return simVali;
 	};
 	
@@ -92,7 +94,6 @@
 			autoTest:true,	//自动校验(onblur校验)
 		};
 		this.settings= $.extend({},this.defaults, options);
-		this.validators=default_validators;
 		eles.find("[message-for]").attr("hidden",true);//隐藏所有消息
 		eles.find("[message-for]").attr("style",this.settings["messageStyle"]);
 		if(this.settings['autoTest']){
@@ -121,7 +122,7 @@
 						$eles.find("[message-for='"+test_id+"']").attr("hidden",true);
 					});
 					$(eles_path).on("blur","[test-id='"+test_id+"']",function(){
-						simValidate.testElement($element);
+						simValidate.testElement($element,test_id);
 					});
 					
 				}else{ // 如果是 group test
@@ -134,7 +135,7 @@
 						});
 						$(eles_path).on("click","[test-id='"+test_id+"']>[test-point]",function(){
 							$eles.find("[message-for='"+test_id+"']").attr("hidden",true);
-							simValidate.testElement($element);
+							simValidate.testElement($element,test_id);
 						});
 				}
 			});
@@ -173,7 +174,7 @@
 				
 				var validator=validators[key];
 				var value = $point.val();
-				if(!validator(value,param,$point)){//注入校验器参数：value 值，param 校验参数，$point待校验对象的jquery对象
+				if(!validator(value,param,$point,this)){//注入校验器参数：value值，param校验参数，$point待校验对象，this当前SimValidate对象
 					var test_id=$point.attr("test-id");
 					if($eles.find("[message-for='"+test_id+"']").size() > 1)
 						$eles.find("[message-for='"+test_id+"'][test-type='"+key+"']").attr("hidden",false);
@@ -221,7 +222,23 @@
 	/**
 	 * 内置验证器
 	 */
-	var default_validators = {
+	SimValidate.prototype.validators = {
+
+		equalTo: function(value,param,point,$obj){//值是否相等
+			if(value==null || value.length==0) return true;
+			if($obj.settings['autoTest']) {
+				var test_id = point.attr("test-id");
+				$($obj.eles_path).on("blur", "[test-id='" + param + "']", function () {
+					$obj.$eles.find("[message-for='" + test_id + "']").attr("hidden", true);
+					$obj.testElement(point);
+				});
+			}
+			if(point.siblings("[test-id='"+param+"']").val()==value)
+				return true;
+			else
+				return false;
+
+		},
 		required: function(value){//非空
 			if(value==null || value.length==0)
 				return false;
