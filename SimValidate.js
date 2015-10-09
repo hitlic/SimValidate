@@ -51,11 +51,11 @@
  * 		b. 自定义校验器
  * 			注意：校验器名必须为合法js标识符（不能包括中划线）
  * 			validate1.extend({
- * 				validator_name : function(value, param, $element, $obj){
+ * 				validator_name : function(value, param, $element, obj){
  * 					//value: 待校验对象的输入值;
  * 					//param: 校验类型的取值（如 max="20" 中的值 20）;
  * 					//$element 待校验对象的Jquery对象;
- * 					//$obj 当前的SimValidate对象.
+ * 					//obj 当前的SimValidate对象.
  * 					...
  * 					return true; // or false
  * 				}
@@ -224,13 +224,13 @@
 	 */
 	SimValidate.prototype.validators = {
 
-		equalTo: function(value,param,point,$obj){//值是否相等
+		equalTo: function(value,param,point,obj){//值是否相等
 			if(value==null || value.length==0) return true;
-			if($obj.settings['autoTest']) {
+			if(obj.settings['autoTest']) {
 				var test_id = point.attr("test-id");
-				$($obj.eles_path).on("blur", "[test-id='" + param + "']", function () {
-					$obj.$eles.find("[message-for='" + test_id + "']").attr("hidden", true);
-					$obj.testElement(point);
+				$(obj.eles_path).on("blur", "[test-id='" + param + "']", function () {
+					obj.$eles.find("[message-for='" + test_id + "']").attr("hidden", true);
+					obj.testElement(point);
 				});
 			}
 			if(point.siblings("[test-id='"+param+"']").val()==value)
